@@ -14,16 +14,30 @@ export default function Navbar() {
 
   useEffect(() => {
     async function fetchWalletAddress() {
-      if (
-        typeof window !== "undefined" &&
-        window.ethereum &&
-        window.ethereum.selectedAddress
-      ) {
-        const address = window.ethereum.selectedAddress;
-        setWalletAddress(address);
+      if (typeof window !== "undefined" && window.ethereum) {
+        if (window.ethereum.selectedAddress) {
+          const address = window.ethereum.selectedAddress;
+          setWalletAddress(address);
+        }
+
+        // Listen for changes in account connection status
+        window.ethereum.on("accountsChanged", async (accounts: string[]) => {
+          if (accounts.length > 0) {
+            setWalletAddress(accounts[0]);
+          } else {
+            setWalletAddress("");
+          }
+        });
       }
     }
     fetchWalletAddress();
+
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      if (typeof window !== "undefined" && window.ethereum) {
+        window.ethereum.removeAllListeners("accountsChanged");
+      }
+    };
   }, []);
 
   async function connectWallet() {
